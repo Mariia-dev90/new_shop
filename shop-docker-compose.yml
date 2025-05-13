@@ -1,0 +1,88 @@
+
+services:
+
+
+  postgres_shop_new:
+    image: postgres
+    container_name: postgres_shop_new
+    restart: always
+    environment:
+      - POSTGRES_USER=myuser
+      - POSTGRES_PASSWORD=mypassword
+      - POSTGRES_DB=shopdatabase
+    ports:
+      - "54327:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/init:/docker-entrypoint-initdb.d
+
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U myuser -d shopdatabase" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+    networks:
+      - shop_network  # Добавляем сеть для db
+
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    environment:
+      PGADMIN_DEFAULT_EMAIL: shop@domain.com    #http://localhost:5057/ логинимся в пг админ и слздаем сервер базі данних name - shopdatabase, hostname or adress - postgres_shop_new, port - 5432, username - myuser , password - mypassword ,  maintanance database- shopdatabase.
+      PGADMIN_DEFAULT_PASSWORD: shoppassword
+    ports:
+      - "5057:80"
+    networks:
+      - shop_network
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.10.1
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+    ports:
+      - "9200:9200"
+
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+
+    networks:
+      - shop_network
+    healthcheck:
+      test: curl -s http://localhost:9200 > /dev/null || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+
+
+  app:
+    build: .
+    volumes:
+      - .:/app
+    ports:
+      - "8009:8000"
+    depends_on:
+      postgres_shop_new:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+
+
+    networks:
+      - shop_network
+
+
+
+networks:
+  shop_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  es_data:
+
+
+
