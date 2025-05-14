@@ -6,6 +6,12 @@ bash
 # Обновление системы
 sudo apt-get update && sudo apt-get -y upgrade
 
+# Установка необходимых утилит
+sudo apt-get install -y \
+    file \   # file ./docker/init/01_init.sql  # Должно показать "UTF-8 text"
+    curl
+
+
 # Установка зависимостей
 sudo apt-get install -y curl git
 
