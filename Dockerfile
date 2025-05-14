@@ -23,6 +23,7 @@ EXPOSE 8000
 
 # Копируем скрипт запуска
 COPY docker/entrypoint.sh /entrypoint.sh
+RUN chmod +r ./docker/init/*.sql
 RUN chmod +x /entrypoint.sh
 
 CMD ["/entrypoint.sh"]
